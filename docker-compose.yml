@@ -1,24 +1,6 @@
 version: '2'
 
 services:
-  proxy:
-    build: proxy
-    links:
-      - gitlab:gitlab
-      - jenkins:jenkins
-    ports:
-      - "80:80"  
-  
-  jenkins:
-    image: jenkins
-    volumes_from:
-      - jenkins_data
-
-   # jenkins data volume containeri-00182b8fc04bbd48b
-  jenkins_data:
-    image: jenkins
-    command: echo "jenkins data volume container."
-
   redis:
     restart: always
     image: sameersbn/redis:latest
@@ -40,7 +22,7 @@ services:
 
   gitlab:
     restart: always
-    image: sameersbn/gitlab:8.14.4
+    image: sameersbn/gitlab:8.14.5
     depends_on:
     - redis
     - postgresql
@@ -167,3 +149,45 @@ services:
     - OAUTH_AZURE_API_SECRET=
     - OAUTH_AZURE_TENANT_ID=
 
+  redmine:
+    image: redmine
+    ports:
+      - 3000:3000
+    environment:
+      POSTGRES_PORT_5432_TCP: postgres
+      POSTGRES_ENV_POSTGRES_USER: redmine
+      POSTGRES_ENV_POSTGRES_PASSWORD: secret
+      POSTGRES_ENV_POSTGRES_DB: redmine
+    volumes:
+      - redmine_data:/usr/src/redmine/files
+    depends_on:
+      - postgres
+    links:
+      - "postgres:postgres"
+    networks:
+      - default
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: secret
+      POSTGRES_USER: redmine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  # jenkins container
+  jenkins:
+    image: jenkins
+    ports:
+      - "8080:8080"
+    volumes_from:
+      - jenkins_data
+
+  # jenkins data volume containeri-00182b8fc04bbd48b
+  jenkins_data:
+    image: jenkins
+    command: echo "jenkins data volume container."
+  
+volumes:
+  redmine_data:
+    driver: local
+  postgres_data:
+    driver: local
