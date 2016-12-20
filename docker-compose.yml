@@ -7,33 +7,30 @@ services:
     command:
     - --loglevel warning
     volumes:
-    - /srv/docker/gitlab/redis:/var/lib/redis
+    - /srv/docker/gitlab/redis:/var/lib/redis:Z
 
   gitlab-postgresql:
     restart: always
     image: sameersbn/postgresql:9.5-3
     volumes:
-      - /srv/docker/gitlab/postgresql:/var/lib/postgresql/data
+    - /srv/docker/gitlab/postgresql:/var/lib/postgresql/data:Z
     environment:
-      - DB_USER=gitlab
-      - DB_PASS=password
-      - DB_NAME=gitlabhq_production
-      - DB_EXTENSION=pg_trgm
-      
+    - DB_USER=gitlab
+    - DB_PASS=password
+    - DB_NAME=gitlabhq_production
+    - DB_EXTENSION=pg_trgm
+
   gitlab:
     restart: always
     image: sameersbn/gitlab:8.14.5
     depends_on:
-      - gitlab-redis
-      - gitlab-postgresql
-    links:
-      - gitlab-redis:gitlab-redis
-      - gitlab-postgresql:gitlab-postgresql
+    - gitlab-redis
+    - gitlab-postgresql
     ports:
-      - "10080:80"
-      - "10022:22"
+    - "10080:80"
+    - "10022:22"
     volumes:
-    - /srv/docker/gitlab/gitlab:/home/git/data
+    - /srv/docker/gitlab/gitlab:/home/git/data:Z
     environment:
     - DEBUG=false
 
@@ -44,7 +41,7 @@ services:
     - DB_PASS=password
     - DB_NAME=gitlabhq_production
 
-    - REDIS_HOST=redis
+    - REDIS_HOST=gitlab-redis
     - REDIS_PORT=6379
 
     - TZ=Asia/Kolkata
@@ -57,9 +54,9 @@ services:
     - GITLAB_PORT=10080
     - GITLAB_SSH_PORT=10022
     - GITLAB_RELATIVE_URL_ROOT=
-    - GITLAB_SECRETS_DB_KEY_BASE=long-and-random-alphanumeric-string
-    - GITLAB_SECRETS_SECRET_KEY_BASE=long-and-random-alphanumeric-string
-    - GITLAB_SECRETS_OTP_KEY_BASE=long-and-random-alphanumeric-string
+    - GITLAB_SECRETS_DB_KEY_BASE=PWF9ekM7XwcA
+    - GITLAB_SECRETS_SECRET_KEY_BASE=PWF9ekM7XwcA
+    - GITLAB_SECRETS_OTP_KEY_BASE=PWF9ekM7XwcA
 
     - GITLAB_ROOT_PASSWORD=
     - GITLAB_ROOT_EMAIL=
@@ -151,7 +148,7 @@ services:
     - OAUTH_AZURE_API_KEY=
     - OAUTH_AZURE_API_SECRET=
     - OAUTH_AZURE_TENANT_ID=
-
+    
   redmine:
     image: redmine
     ports:
