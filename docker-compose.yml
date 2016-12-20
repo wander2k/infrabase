@@ -1,41 +1,44 @@
 version: '2'
 
 services:
-  redis:
+  gitlab-redis:
     restart: always
     image: sameersbn/redis:latest
     command:
     - --loglevel warning
     volumes:
-    - /srv/docker/gitlab/redis:/var/lib/redis:Z
+    - /srv/docker/gitlab/redis:/var/lib/redis
 
-  postgresql:
+  gitlab-postgresql:
     restart: always
     image: sameersbn/postgresql:9.5-3
     volumes:
-    - /srv/docker/gitlab/postgresql:/var/lib/postgresql:Z
+      - /srv/docker/gitlab/postgresql:/var/lib/postgresql/data
     environment:
-    - DB_USER=gitlab
-    - DB_PASS=password
-    - DB_NAME=gitlabhq_production
-    - DB_EXTENSION=pg_trgm
-
+      - DB_USER=gitlab
+      - DB_PASS=password
+      - DB_NAME=gitlabhq_production
+      - DB_EXTENSION=pg_trgm
+      
   gitlab:
     restart: always
     image: sameersbn/gitlab:8.14.5
     depends_on:
-    - redis
-    - postgresql
+      - gitlab-redis
+      - gitlab-postgresql
+    links:
+      - gitlab-redis:gitlab-redis
+      - gitlab-postgresql:gitlab-postgresql
     ports:
-    - "10080:80"
-    - "10022:22"
+      - "10080:80"
+      - "10022:22"
     volumes:
-    - /srv/docker/gitlab/gitlab:/home/git/data:Z
+    - /srv/docker/gitlab/gitlab:/home/git/data
     environment:
     - DEBUG=false
 
     - DB_ADAPTER=postgresql
-    - DB_HOST=postgresql
+    - DB_HOST=gitlab-postgresql
     - DB_PORT=5432
     - DB_USER=gitlab
     - DB_PASS=password
@@ -159,35 +162,34 @@ services:
       POSTGRES_ENV_POSTGRES_PASSWORD: secret
       POSTGRES_ENV_POSTGRES_DB: redmine
     volumes:
-      - redmine_data:/usr/src/redmine/files
+      - /srv/docker/redmine/redmine:/home/redmine/data
     depends_on:
-      - postgres
+      - redmine-postgres
     links:
-      - "postgres:postgres"
+      - "redmine-postgres:postgres"
     networks:
       - default
-  postgres:
+  redmine-postgres:
     image: postgres
     environment:
       POSTGRES_PASSWORD: secret
       POSTGRES_USER: redmine
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-  # jenkins container
+      - /srv/docker/redmine/postgresql:/var/lib/postgresql
+ # jenkins container
   jenkins:
+    restart: always
     image: jenkins
     ports:
       - "8080:8080"
-    volumes_from:
-      - jenkins_data
+    volumes:
+      - /srv/docker/jenkins:/var/jenkins_home  
 
-  # jenkins data volume containeri-00182b8fc04bbd48b
-  jenkins_data:
-    image: jenkins
-    command: echo "jenkins data volume container."
-  
-volumes:
-  redmine_data:
-    driver: local
-  postgres_data:
-    driver: local
+  # proxy:
+  #  build: proxy
+  #  links:
+  #    - gitlab:gitlab
+  #    - redmine:redmine
+  #    - jenkins:jenkins
+  #  ports:
+  #    - "80:80"
