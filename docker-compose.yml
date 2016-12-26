@@ -1,6 +1,13 @@
 version: '2'
 
 services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+      
   gitlab-redis:
     restart: always
     image: sameersbn/redis:latest
@@ -24,14 +31,13 @@ services:
     restart: always
     image: sameersbn/gitlab:8.14.5
     depends_on:
-    - gitlab-redis
-    - gitlab-postgresql
-    ports:
-    - "10080:80"
-    - "10022:22"
+      - gitlab-redis
+      - gitlab-postgresql
     volumes:
     - /srv/docker/gitlab/gitlab:/home/git/data:Z
     environment:
+    - VIRTUAL_HOST=gitlab.mydev
+    - VIRTUAL_PORT=80
     - DEBUG=false
 
     - DB_ADAPTER=postgresql
@@ -151,21 +157,19 @@ services:
     
   redmine:
     image: redmine
-    ports:
-      - 3000:3000
     environment:
-      POSTGRES_PORT_5432_TCP: postgres
-      POSTGRES_ENV_POSTGRES_USER: redmine
-      POSTGRES_ENV_POSTGRES_PASSWORD: secret
-      POSTGRES_ENV_POSTGRES_DB: redmine
+     - POSTGRES_PORT_5432_TCP=postgres
+     - POSTGRES_ENV_POSTGRES_USER=redmine
+     - POSTGRES_ENV_POSTGRES_PASSWORD=secret
+     - POSTGRES_ENV_POSTGRES_DB=redmine
+     - VIRTUAL_HOST=redmine.mydev
+     - VIRTUAL_PORT=3000
     volumes:
       - /srv/docker/redmine/redmine:/home/redmine/data
     depends_on:
       - redmine-postgres
     links:
-      - "redmine-postgres:postgres"
-    networks:
-      - default
+      - redmine-postgres:postgres
   redmine-postgres:
     image: postgres
     environment:
@@ -177,16 +181,9 @@ services:
   jenkins:
     restart: always
     image: jenkins
-    ports:
-      - "8080:8080"
     volumes:
       - /srv/docker/jenkins:/var/jenkins_home  
+    environment:
+      - VIRTUAL_HOST=jenkins.mydev
+      - VIRTUAL_PORT=8080
 
-  # proxy:
-  #  build: proxy
-  #  links:
-  #    - gitlab:gitlab
-  #    - redmine:redmine
-  #    - jenkins:jenkins
-  #  ports:
-  #    - "80:80"
