@@ -22,5 +22,7 @@
    http://gitlab.mydev  
    http://redmine.mydev  
    
-   
+#### reference
+https://github.com/sameersbn/docker-gitlab
+https://github.com/sameersbn/docker-redmine
    
